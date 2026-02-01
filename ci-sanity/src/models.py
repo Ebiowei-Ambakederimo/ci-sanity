@@ -1,9 +1,8 @@
-    """
-    Core data models for ci-sanity.
+"""
+Core data models for ci-sanity.
+"""
 
-    """
-
-from tying import Optional
+from typing import Optional
 from dataclasses import dataclass
 
 @dataclass
@@ -11,7 +10,7 @@ class Issue:
     """Represents a problem found in a CI workflow."""
     severity: str # 'error' or 'warning'
     file: str
-    jod: str
+    job: str
     step: Optional[int]
     message: str
     fix: str

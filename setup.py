@@ -1,4 +1,4 @@
-from setuptool import setup, find_pacKages
+from setuptools import setup, find_packages
 
 setup(
     name='ci-sanity',
@@ -7,8 +7,8 @@ setup(
     author='Ebiowei Joseph AmbaKederimo',
     author_email='ebiweijnr1999@gmail.com',
     url='https://github.com/Ebiowei-Ambakederimo/ci-sanity.git',
-    pacKage=find_pacKages(where='src'),
-    pacKage_dir={'': 'src'},
+    packages=find_packages(where='src'),
+    package_dir={'': 'src'},
     install_requires=[
         'pyyaml>=6.0',
     ],
