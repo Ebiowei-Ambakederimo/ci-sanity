@@ -1,0 +1,15 @@
+# ci-sanity configuration
+
+# Platform: github or gitlab
+platform: github
+
+# Declared secrets (prevents false warnings)
+secrets:
+  - DATABASE_URL
+  - STRIPE_KEY
+  - AWS_ACCESS_KEY_ID
+  - AWS_SECRET_ACCESS_KEY
+  - GITHUB_TOKEN
+
+# Strict mode: treat warnings as errors
+strict: false

@@ -4,46 +4,78 @@ A CLI tool that tells you your CI will fail before you push.
 
 Like ESLint, but for pipelines with trust issues.
 
-## Install
+## Installation
 
 ```bash
-npm install -g ci-sanity
+pip install ci-sanity
 ```
 
 ## Usage
 
 ```bash
+# Check current directory
 ci-sanity check
+
+# Check specific directory
+ci-sanity check --path ./my-repo
+
+# Strict mode (warnings become errors)
+ci-sanity check --strict
+
+# Custom config file
+ci-sanity check --config custom-config.yml
 ```
 
-### Options
+## What It Checks
 
-```bash
-ci-sanity check --github          # Check GitHub Actions
-ci-sanity check --gitlab          # Check GitLab CI
-ci-sanity check --path ./project  # Specify directory
-ci-sanity check --strict          # Warnings = errors
+### YAML Validation
+Catches syntax and structure errors before your CI does.
+
+```
+✗ job.build.steps[2] is invalid yaml (line 34)
+  → fix yaml syntax
 ```
 
-## What It Catches
+### Runner Compatibility
+Validates runner names and detects common mistakes.
 
-**YAML syntax errors**
-Bad indentation, missing colons, malformed structure.
+```
+⚠ unknown runner: ubuntu-20.04-custom
+  → use ubuntu-latest, windows-latest, or macos-latest
 
-**Invalid runners**
-Unknown or unsupported runner names.
+✗ uses docker but runner is windows. pick a side.
+  → use ubuntu-latest for docker
+```
 
-**Platform mismatches**
-Docker on Windows runners. Linux commands on Windows.
+### Action Version Checking
+Flags unpinned or unstable action versions.
 
-**Unpinned action versions**
-Actions using @master or @main instead of pinned versions.
+```
+⚠ actions/checkout@master = chaos energy. pin a version.
+  → use @v3 or a specific commit sha
 
-**Missing secrets**
-References to secrets not declared in config.
+✗ action actions/setup-node has no version
+  → add @v3 or specific version
+```
 
-**Wrong step order**
-Checkout after other steps. Cache after install.
+### Missing Secrets Detection
+Finds undeclared secrets and suggests fixes.
+
+```
+⚠ secret STRIPE_KET not found. typo or optimism?
+  → did you mean STRIPE_KEY? or add to .ci-sanity.yml
+```
+
+### Step Order Sanity
+Catches illogical step ordering.
+
+```
+⚠ step runs before checkout
+  → move actions/checkout to first step
+
+⚠ install runs before cache
+  → move cache step before install
+```
 
 ## Configuration
 
@@ -51,9 +83,12 @@ Create `.ci-sanity.yml` in your project root:
 
 ```yaml
 platform: github
+
 secrets:
   - DATABASE_URL
   - STRIPE_KEY
+  - AWS_ACCESS_KEY_ID
+
 strict: false
 ```
 
@@ -61,51 +96,59 @@ No config file needed. Defaults work fine.
 
 ## Exit Codes
 
-- `0` = clean, no issues
-- `1` = warnings found
-- `2` = errors found (CI will fail)
-
-## Examples
-
-```bash
-# Check current directory
-ci-sanity check
-
-# Check specific project
-ci-sanity check --path ~/projects/my-app
-
-# Strict mode (warnings = errors)
-ci-sanity check --strict
-```
-
-## Features
-
-Fast. Runs in under 1.5 seconds.
-Offline. No network calls.
-Zero setup. Works immediately.
-Clear output. Shows exactly what's wrong.
+- `0` = No issues
+- `1` = Warnings found
+- `2` = Errors found (CI will probably fail)
 
 ## Supported Platforms
 
-GitHub Actions: yes
-GitLab CI: yes
+- GitHub Actions
+- GitLab CI
 
-More platforms coming if users ask.
+## Performance
+
+Runs in under 1 second on average.
+
+Zero network calls. Works offline.
 
 ## Why This Exists
 
-CI configs fail for dumb reasons.
-You only find out after pushing.
-Red builds waste time.
-This tool catches errors locally.
+CI configs fail for dumb reasons:
+- Bad YAML
+- Missing secrets
+- Wrong runners
+- Ancient actions
+
+You only find out after pushing. Red build. Rage. Coffee.
+
+ci-sanity catches these before you push.
+
+## Philosophy
+
+Keep it boring. Boring pays.
+
+- No auto-fixing
+- No UI dashboard
+- No AI
+- No enterprise policy engine
+
+Just fast, local validation.
 
 ## Development
 
 ```bash
-npm install
-npm run build
-npm link
-ci-sanity check
+# Clone repo
+git clone https://github.com/yourusername/ci-sanity.git
+cd ci-sanity
+
+# Install in dev mode
+pip install -e .
+
+# Run tests
+python -m pytest
+
+# Run on example workflows
+ci-sanity check --path examples/
 ```
 
 ## License
