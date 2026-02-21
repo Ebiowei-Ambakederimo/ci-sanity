@@ -40,73 +40,56 @@ class RunnerCompatibilityRule(Rule):
                 ))
                 continue
             
-            # Normalize to list or keep single value
-            runners = [runs_on] if isinstance(runs_on, str) else runs_on
+            # Handle different runs-on shapes explicitly: str, list, dict
+            if isinstance(runs_on, str):
+                runners_list = [runs_on]
+            elif isinstance(runs_on, list):
+                runners_list = runs_on
+            elif isinstance(runs_on, dict):
+                # Unsupported complex runs-on (matrix-like dict). Emit a warning.
+                issues.append(Issue(
+                    severity='warning',
+                    file=file_path,
+                    job=job_name,
+                    step=None,
+                    message=f'unsupported runs-on dictionary: {runs_on}',
+                    fix='use a simple runner label or list of labels'
+                ))
+                continue
+            else:
+                # Unknown type, skip
+                continue
+
+            # Normalize runners_list to only strings and skip templated entries
+            runners_list = [r for r in runners_list if isinstance(r, str)]
+            runners_list = [r for r in runners_list if not r.strip().startswith('${{')]
 
             # If runs-on is a list-like configuration, accept it if it contains
             # a self-hosted entry (exact or prefixed), otherwise validate
             # that at least one listed runner is in the known set.
-            if isinstance(runners, list):
-                # Filter non-string entries
-                runners_str = [r for r in runners if isinstance(r, str)]
+            has_self_hosted = (
+                any(r == 'self-hosted' for r in runners_list) or
+                any(r.startswith('self-hosted') for r in runners_list)
+            )
 
-                # Skip variables like ${{ ... }}
-                runners_str = [r for r in runners_str if not r.strip().startswith('${{')]
-
-                has_self_hosted = (
-                    'self-hosted' in runners_str or
-                    any(r.startswith('self-hosted') for r in runners_str)
-                )
-
-                if not has_self_hosted:
-                    # If none are self-hosted, require at least one known runner
-                    if not any(r in self.VALID_GITHUB_RUNNERS for r in runners_str):
-                        # Report unknown runner(s)
-                        issues.append(Issue(
-                            severity='warning',
-                            file=file_path,
-                            job=job_name,
-                            step=None,
-                            message=f'unknown runner list: {runners}',
-                            fix='use ubuntu-latest, windows-latest, or macos-latest'
-                        ))
-
-                # For Windows docker checks, if any runner string looks like windows,
-                # run the docker-on-windows validation once for the job.
-                if any(isinstance(r, str) and 'windows' in r.lower() for r in runners):
-                    issues.extend(
-                        self._check_docker_on_windows(job_config, job_name, file_path)
-                    )
-            else:
-                # Single runner string path
-                runner = runners
-                if not isinstance(runner, str):
-                    continue
-
-                # Skip variables
-                if runner.startswith('${{'):
-                    continue
-
-                # Check validity for single string
-                is_valid = (
-                    runner in self.VALID_GITHUB_RUNNERS or
-                    runner.startswith('self-hosted')
-                )
-
-                if not is_valid:
+            if not has_self_hosted:
+                # If none are self-hosted, require at least one known runner
+                if not any(r in self.VALID_GITHUB_RUNNERS for r in runners_list):
+                    # Report unknown runner(s)
                     issues.append(Issue(
                         severity='warning',
                         file=file_path,
                         job=job_name,
                         step=None,
-                        message=f'unknown runner: {runner}',
+                        message=f'unknown runner list: {runners_list}',
                         fix='use ubuntu-latest, windows-latest, or macos-latest'
                     ))
 
-                if 'windows' in runner.lower():
-                    issues.extend(
-                        self._check_docker_on_windows(job_config, job_name, file_path)
-                    )
+            # Only run docker-on-windows checks when any string label contains 'windows'
+            if any('windows' in r.lower() for r in runners_list):
+                issues.extend(
+                    self._check_docker_on_windows(job_config, job_name, file_path)
+                )
         
         return issues
     
@@ -134,8 +117,12 @@ class RunnerCompatibilityRule(Rule):
             uses = step.get('uses', '') or ''
             run = step.get('run', '') or ''
 
-            # Detect a job-level container declaration
-            has_container = bool(job_config.get('container')) or ('container' in job_config)
+            # Detect a job-level container declaration (once, outside loop)
+        has_container = bool(job_config.get('container')) or ('container' in job_config)
+
+        for i, step in enumerate(steps):
+            uses = step.get('uses', '') or ''
+            run = step.get('run', '') or ''
 
             # Detect docker CLI usage in non-comment lines
             found_docker_cli = False

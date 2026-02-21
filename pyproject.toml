@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ci-sanity"
+version = "0.1.0"
+description = "Catch CI failures before you push"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+authors = [
+    {name = "Ebiowei Joseph AmbaKederimo", email = "ebiweijnr1999@gmail.com"}
+]
+keywords = ["ci", "cd", "github-actions", "gitlab-ci", "validation", "linter"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+]
+
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Ebiowei-Ambakederimo/ci-sanity"
+Repository = "https://github.com/Ebiowei-Ambakederimo/ci-sanity"
+Issues = "https://github.com/Ebiowei-Ambakederimo/ci-sanity/issues"
+
+[project.scripts]
+ci-sanity = "ci_sanity.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

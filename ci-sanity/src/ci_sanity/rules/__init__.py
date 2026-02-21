@@ -1,9 +1,10 @@
+# src/ci_sanity/rules/__init__.py
 """
-Base rule class and rule registry.
+Validation rules for ci-sanity.
 """
 
-from typing import List, Dict, Any
 from abc import ABC, abstractmethod
+from typing import List, Dict, Any
 
 from ci_sanity.models import Issue
 
@@ -38,3 +39,6 @@ class Rule(ABC):
         if not isinstance(steps, list):
             return []
         return [s for s in steps if isinstance(s, dict)]
+
+
+__all__ = ['Rule']
