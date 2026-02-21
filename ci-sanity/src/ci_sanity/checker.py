@@ -4,7 +4,7 @@ Main checker logic for ci-sanity.
 
 import os
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict
 import yaml
 
 from ci_sanity.models import Issue, Colors
@@ -35,7 +35,7 @@ class Checker:
             StepOrderRule(),
         ]
     
-    def find_workflow_files(self, path: str) -> List[str, Any]:
+    def find_workflow_files(self, path: str) -> List[str]:
         """Find all workflow files in directory."""
         path_obj = Path(path)
         workflows = []
@@ -63,7 +63,7 @@ class Checker:
         
         # Try to parse YAML
         try:
-            with open(file_path) as f:
+            with open(file_path, encoding='utf-8') as f:
                 workflow = yaml.safe_load(f)
         except yaml.YAMLError as e:
             # YAML parse error
